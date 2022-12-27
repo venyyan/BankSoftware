@@ -1,2 +1,15 @@
 ﻿  BankSoftware.cpp
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(21,31): warning C4129: '!': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(21,31): warning C4129: ':': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(21,31): warning C4129: '[': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '!': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '@': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '#': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '$': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '%': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '^': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '&': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(22,31): warning C4129: '*': unrecognized character escape sequence
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(80): warning C4715: 'isValidUsername': not all control paths return a value
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(94): warning C4715: 'isValidPassword': not all control paths return a value
   BankSoftware.vcxproj -> C:\Users\PC\source\repos\BankSoftware\x64\Debug\BankSoftware.exe
