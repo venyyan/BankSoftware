@@ -30,6 +30,7 @@ const string MESSAGE_NOT_POSITIVE_AMOUNT = "You entered a non-positive amount!";
 const string MESSAGE_SUCCESSFUL_DEPOSIT = "You successfully deposited ";
 const string MESSAGE_EXCEEDED_OVERDRAFT = "The maximal overdraft is 10000! You exceed it by ";
 const string MESSAGE_TRANSFER = "You successfully transfered ";
+const string MESSAGE_WITHDRAW = "You successfully withdrew ";
 
 const string REGEX_USERNAME = "^[A-Za-z\!-/\:-@\[-_]+$";
 const string REGEX_PASSWORD = "[A-Za-z\\\\0-9\!\@\#\$\%\^\&\*]+$";
@@ -45,6 +46,7 @@ string cancelAccount();
 string deposit();
 string hashedPassword(string);
 string transfer(string, double);
+string withdraw(double amount);
 bool isValidUsername(string);
 bool isValidPassword(string);
 bool userAlreadyExists(string);
@@ -100,6 +102,12 @@ int main()
 			string username;
 			cin >> amount >> username;
 			cout << transfer(username, amount);
+		}
+		else if (command == COMMAND_WITHDRAW) {
+			double amount;
+			cin >> amount;
+
+
 		}
 	}
 }
@@ -181,6 +189,19 @@ string transfer(string usernameToSend, double amount) {
 	string balanceAfterSendingMoneyStr = to_string(balanceAfterSendingMoney);
 	loggedUser.at(2) = balanceAfterSendingMoneyStr;
 	userData.at(userId) = loggedUser;
+
+
+	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
+}
+
+string withdraw(double amount) {
+	double balance = stof(loggedUser[2]);
+	if (balance - amount < MAX_OVERDRAFT) {
+		return MESSAGE_EXCEEDED_OVERDRAFT + to_string(abs(balance - amount + MAX_OVERDRAFT)) + " BGN";
+	}
+
+	double balanceAfterWithdrawing = stod(loggedUser[2]) - amount;
+	loggedUser.at(2) = balanceAfterWithdrawing;
 
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
