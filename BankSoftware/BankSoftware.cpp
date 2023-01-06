@@ -2,6 +2,7 @@
 #include <string>
 #include <regex>
 #include <sstream>
+#include <fstream>
 using namespace std;
 
 const char COMMAND_LOGIN = 'L';
@@ -53,14 +54,18 @@ bool userAlreadyExists(string);
 bool passwordMatchesUsername(string, string);
 bool isPositiveAmount(double);
 vector<string> returnUser(string, string, size_t&);
+vector<string> splitLineFromFile(string);
+void getInformationFromFile();
+void updateFile();
 
 
-vector<vector<string>> userData;
+vector<vector<string>> userData = {};
 vector<string> loggedUser;
 size_t userId;
 
 int main()
 {
+	getInformationFromFile();
 	cout << MESSAGE_OPENING;
 
 	char command = ' ';
@@ -76,6 +81,7 @@ int main()
 			cout << loginUser(username, password, isLogged);
 			if (isLogged) {
 				loggedUser = returnUser(username, password, userId);
+
 			}
 		}
 		else if (command == COMMAND_REGISTER) {
@@ -106,9 +112,9 @@ int main()
 		else if (command == COMMAND_WITHDRAW) {
 			double amount;
 			cin >> amount;
-
-
+			cout << withdraw(amount);
 		}
+		updateFile();
 	}
 }
 
@@ -146,7 +152,7 @@ string loginUser(string username, string password, bool& isLogged) {
 }
 
 string cancelAccount() {
-	
+
 	string username = loggedUser[0];
 	string password = loggedUser[1];
 	if (!passwordMatchesUsername(username, hashedPassword(password))) {
@@ -184,7 +190,7 @@ string transfer(string usernameToSend, double amount) {
 	if (balance - amount < MAX_OVERDRAFT) {
 		return MESSAGE_EXCEEDED_OVERDRAFT + to_string(abs(balance - amount + MAX_OVERDRAFT)) + " BGN";
 	}
-	
+
 	double balanceAfterSendingMoney = stod(loggedUser[2]) - amount;
 	string balanceAfterSendingMoneyStr = to_string(balanceAfterSendingMoney);
 	loggedUser.at(2) = balanceAfterSendingMoneyStr;
@@ -219,6 +225,40 @@ vector<string> returnUser(string username, string password, size_t& userId) {
 	return user;
 }
 
+void getInformationFromFile() {
+	fstream file;
+	file.open("BankSoftwareDataBase.txt", fstream::in);
+	string buffer;
+
+	while (getline(file, buffer)) {
+		userData.push_back(splitLineFromFile(buffer));
+	}
+	file.close();
+}
+
+void updateFile() {
+	fstream file;
+
+	file.open("BankSoftwareDataBase.txt", fstream::out | std::ofstream::trunc);
+	for (int i = 0; i < userData.size(); i++) {
+		string input = userData[i][0] + ':' + userData[i][1] + ':' + userData[i][2];
+
+		std::getline(cin, input);
+		file << input << "\n";
+	}
+	file.close();
+}
+vector<string> splitLineFromFile(string buffer) {
+	vector<string> splitted;
+	int indexCounter;
+	string token;
+	while (indexCounter = buffer.find(':') != string::npos) {
+		token = buffer.substr(0, indexCounter);
+		splitted.push_back(token);
+		buffer.erase(0, indexCounter + 1);
+	}
+	return splitted;
+}
 string hashedPassword(string password) {
 	hash<string> passwordHasher;
 	string hashedPassword = to_string(passwordHasher(password));
