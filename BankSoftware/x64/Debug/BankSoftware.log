@@ -10,11 +10,7 @@ C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(37,31): warn
 C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(37,31): warning C4129: '^': unrecognized character escape sequence
 C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(37,31): warning C4129: '&': unrecognized character escape sequence
 C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(37,31): warning C4129: '*': unrecognized character escape sequence
-C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(210,21): warning C4244: 'argument': conversion from 'double' to 'const _Elem', possible loss of data
-          with
-          [
-              _Elem=char
-          ]
-C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(272): warning C4715: 'isValidUsername': not all control paths return a value
-C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(286): warning C4715: 'isValidPassword': not all control paths return a value
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(265,39): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(283): warning C4715: 'isValidUsername': not all control paths return a value
+C:\Users\PC\source\repos\BankSoftware\BankSoftware\BankSoftware.cpp(297): warning C4715: 'isValidPassword': not all control paths return a value
   BankSoftware.vcxproj -> C:\Users\PC\source\repos\BankSoftware\x64\Debug\BankSoftware.exe

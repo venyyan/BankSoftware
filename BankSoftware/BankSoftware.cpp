@@ -59,7 +59,7 @@ void getInformationFromFile();
 void updateFile();
 
 
-vector<vector<string>> userData = {};
+vector<vector<string>> userData;
 vector<string> loggedUser;
 size_t userId;
 
@@ -148,6 +148,7 @@ string loginUser(string username, string password, bool& isLogged) {
 		isLogged = false;
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
+	isLogged = true;
 	return MESSAGE_AFTER_LOGGING_SECOND;
 }
 
@@ -159,7 +160,7 @@ string cancelAccount() {
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
 
-	userData.erase(userData.begin() + userId - 1);
+	userData.erase(userData.begin() + userId);
 	return MESSAGE_OPENING;
 }
 
@@ -197,6 +198,7 @@ string transfer(string usernameToSend, double amount) {
 	userData.at(userId) = loggedUser;
 
 
+
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
 
@@ -207,8 +209,9 @@ string withdraw(double amount) {
 	}
 
 	double balanceAfterWithdrawing = stod(loggedUser[2]) - amount;
-	loggedUser.at(2) = balanceAfterWithdrawing;
-
+	string balanceAfterWithdrawingStr = to_string(balanceAfterWithdrawing);
+	loggedUser.at(2) = balanceAfterWithdrawingStr;
+	userData.at(userId) = loggedUser;
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
 
@@ -216,9 +219,13 @@ vector<string> returnUser(string username, string password, size_t& userId) {
 	vector<string> user;
 	for (size_t i = 0; i < userData.size(); i++)
 	{
-		if (userData[i][0] == username && userData[i][1] == password) {
-			user = { username, password, userData[i][2] };
-			userId = i;
+		for (int j = 0; j < userData[i].size(); j++) {
+
+			if (userData[i][0] == username && userData[i][1] == hashedPassword(password)) {
+				user = { username, hashedPassword(password), userData[i][2] };
+				userId = i;
+				break;
+			}
 			break;
 		}
 	}
@@ -232,31 +239,35 @@ void getInformationFromFile() {
 
 	while (getline(file, buffer)) {
 		userData.push_back(splitLineFromFile(buffer));
-	}
+	} 
 	file.close();
 }
 
 void updateFile() {
 	fstream file;
 
-	file.open("BankSoftwareDataBase.txt", fstream::out | std::ofstream::trunc);
+	file.open("BankSoftwareDataBase.txt", fstream::out);
 	for (int i = 0; i < userData.size(); i++) {
-		string input = userData[i][0] + ':' + userData[i][1] + ':' + userData[i][2];
-
-		std::getline(cin, input);
-		file << input << "\n";
+		string input;
+		for (int j = 0; j < userData[i].size(); j++) {
+			input = userData[i][0] + ':' + userData[i][1] + ':' + userData[i][2];
+			file << input << "\n";
+			break;
+		}
 	}
 	file.close();
 }
 vector<string> splitLineFromFile(string buffer) {
 	vector<string> splitted;
-	int indexCounter;
+	int start = 0;
+	int end = 0;
 	string token;
-	while (indexCounter = buffer.find(':') != string::npos) {
-		token = buffer.substr(0, indexCounter);
+	while ((end = buffer.find(':', start)) != string::npos) {
+		token = buffer.substr(start, end - start);
+		start = end + 1;
 		splitted.push_back(token);
-		buffer.erase(0, indexCounter + 1);
 	}
+	splitted.push_back(buffer.substr(start));
 	return splitted;
 }
 string hashedPassword(string password) {
@@ -288,19 +299,23 @@ bool isValidPassword(string password) {
 bool userAlreadyExists(string username) {
 	for (int i = 0; i < userData.size(); i++)
 	{
-		if (userData[i][0] == username) {
-			return true;
+		for (int j = 0; j < userData[i].size(); j++) {
+			if (userData[i][0] == username) {
+				return true;
+			}
 		}
 	}
-
 	return false;
 }
 
 bool passwordMatchesUsername(string username, string password) {
 	for (int i = 0; i < userData.size(); i++)
 	{
-		if (userData[i][0] == username && userData[i][1] == password) {
-			return true;
+		for (int j = 0; j < userData[i].size(); j++) {
+
+			if (userData[i][0] == username && userData[i][1] == password) {
+				return true;
+			}
 		}
 	}
 	return false;
