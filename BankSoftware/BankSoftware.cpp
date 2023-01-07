@@ -32,6 +32,7 @@ const string MESSAGE_SUCCESSFUL_DEPOSIT = "You successfully deposited ";
 const string MESSAGE_EXCEEDED_OVERDRAFT = "The maximal overdraft is 10000! You exceed it by ";
 const string MESSAGE_TRANSFER = "You successfully transfered ";
 const string MESSAGE_WITHDRAW = "You successfully withdrew ";
+const string MESSAGE_NOT_VALID_COMMAND = "Not a valid command!";
 
 const string REGEX_USERNAME = "^[A-Za-z\!-/\:-@\[-_]+$";
 const string REGEX_PASSWORD = "[A-Za-z\\\\0-9\!\@\#\$\%\^\&\*]+$";
@@ -41,13 +42,13 @@ const string REGEX_PASSWORD_CONTAINS_AT_LEAST_ONE_UPPERCASE_LOWERCASE_SYMBOL =
 const unsigned MINIMUM_PASSWORD_LENGTH = 5;
 
 const int MAX_OVERDRAFT = -10000;
-string registerUser(string, string, bool&);
-string loginUser(string, string, bool&);
+string registerUser(bool&);
+string loginUser(bool&);
 string cancelAccount();
 string deposit();
 string hashedPassword(string);
-string transfer(string, double);
-string withdraw(double amount);
+string transfer();
+string withdraw();
 int returnUserIdByUsername(string, string&);
 bool isValidUsername(string);
 bool isValidPassword(string);
@@ -67,7 +68,7 @@ size_t userId;
 int main()
 {
 	getInformationFromFile();
-	cout << MESSAGE_OPENING;
+	cout << MESSAGE_OPENING << endl;
 
 	char command = ' ';
 	bool isLogged = false;
@@ -77,49 +78,43 @@ int main()
 		string username;
 		string password;
 
-		if (command == COMMAND_LOGIN) {
-			cin >> username >> password;
-			cout << loginUser(username, password, isLogged);
-			if (isLogged) {
-				loggedUser = returnUser(username, password, userId);
-
+		if (!isLogged) {
+			switch (command) {
+			case COMMAND_LOGIN: cout << loginUser(isLogged);
+				break;
+			case COMMAND_REGISTER: cout << registerUser(isLogged);
+				break;
+			case COMMAND_QUIT: return 0;
+				break;
+			default: cout << MESSAGE_NOT_VALID_COMMAND;
+				break;
 			}
 		}
-		else if (command == COMMAND_REGISTER) {
-			cin >> username >> password;
-			cout << registerUser(username, password, isLogged);
-			if (isLogged) {
-				loggedUser = returnUser(username, password, userId);
+		else {
+			switch (command) {
+			case COMMAND_CANCEL_ACCOUNT: cout << cancelAccount();
+				break;
+			case COMMAND_DEPOSIT: cout << deposit();
+				break;
+			case COMMAND_LOGOUT: cout << MESSAGE_OPENING; 
+				isLogged = false;
+				break;
+			case COMMAND_TRANSFER: cout << transfer();
+				break;
+			case COMMAND_WITHDRAW: cout << withdraw();
+				break;
+			default: cout << MESSAGE_NOT_VALID_COMMAND;
+				break;
 			}
-		}
-		else if (command == COMMAND_CANCEL_ACCOUNT) {
-			cout << MESSAGE_ENTER_PASSWORD;
-			cin >> password;
-			cout << cancelAccount();
-		}
-		else if (command == COMMAND_DEPOSIT) {
-			cout << deposit();
-		}
-		else if (command == COMMAND_LOGOUT) {
-			cout << MESSAGE_OPENING;
-			isLogged = false;
-		}
-		else if (command == COMMAND_TRANSFER) {
-			double amount;
-			string username;
-			cin >> amount >> username;
-			cout << transfer(username, amount);
-		}
-		else if (command == COMMAND_WITHDRAW) {
-			double amount;
-			cin >> amount;
-			cout << withdraw(amount);
+			
 		}
 		updateFile();
 	}
 }
 
-string registerUser(string username, string password, bool& isLogged) {
+string registerUser(bool& isLogged) {
+	string username, password;
+	cin >> username >> password;
 	if (!isValidUsername(username)) {
 		isLogged = false;
 		return MESSAGE_NOT_VALID_USERNAME;
@@ -135,11 +130,16 @@ string registerUser(string username, string password, bool& isLogged) {
 	isLogged = true;
 	vector<string> user = { username, hashedPassword(password), "0" };
 	userData.push_back(user);
+	if (isLogged) {
+		loggedUser = returnUser(username, password, userId);
+	}
 
 	return MESSAGE_AFTER_LOGGING_FIRST + "0" + MESSAGE_AFTER_LOGGING_SECOND;
 }
 
-string loginUser(string username, string password, bool& isLogged) {
+string loginUser(bool& isLogged) {
+	string username, password;
+	cin >> username >> password;
 	if (!userAlreadyExists(username)) {
 		isLogged = false;
 		return MESSAGE_USER_DOES_NOT_EXIST;
@@ -149,14 +149,21 @@ string loginUser(string username, string password, bool& isLogged) {
 		isLogged = false;
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
+
 	isLogged = true;
+	if (isLogged) {
+		loggedUser = returnUser(username, password, userId);
+
+	}
 	return MESSAGE_AFTER_LOGGING_SECOND;
 }
 
 string cancelAccount() {
+	cout << MESSAGE_ENTER_PASSWORD;
+	string password;
+	cin >> password;
 
 	string username = loggedUser[0];
-	string password = loggedUser[1];
 	if (!passwordMatchesUsername(username, hashedPassword(password))) {
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
@@ -184,7 +191,10 @@ string deposit() {
 	return MESSAGE_SUCCESSFUL_DEPOSIT + depositAmountStr + " BGN";
 }
 
-string transfer(string usernameToSend, double amount) {
+string transfer() {
+	double amount;
+	string usernameToSend;
+	cin >> amount >> usernameToSend;
 	if (!userAlreadyExists(usernameToSend)) {
 		return MESSAGE_NOT_VALID_USERNAME;
 	}
@@ -200,8 +210,8 @@ string transfer(string usernameToSend, double amount) {
 
 	string balanceOfUserToSend;
 	int idOfUsernameToSend = returnUserIdByUsername(usernameToSend, balanceOfUserToSend);
-	
-	
+
+
 	double balanceAfterReceivingMoney = stod(balanceOfUserToSend) + amount;
 	string balanceAfterReceivingMoneyStr = to_string(balanceAfterReceivingMoney);
 	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
@@ -209,7 +219,10 @@ string transfer(string usernameToSend, double amount) {
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
 
-string withdraw(double amount) {
+string withdraw() {
+	double amount;
+	cin >> amount;
+
 	double balance = stof(loggedUser[2]);
 	if (balance - amount < MAX_OVERDRAFT) {
 		return MESSAGE_EXCEEDED_OVERDRAFT + to_string(abs(balance - amount + MAX_OVERDRAFT)) + " BGN";
@@ -260,7 +273,7 @@ void getInformationFromFile() {
 
 	while (getline(file, buffer)) {
 		userData.push_back(splitLineFromFile(buffer));
-	} 
+	}
 	file.close();
 }
 
