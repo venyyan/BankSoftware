@@ -48,6 +48,7 @@ string deposit();
 string hashedPassword(string);
 string transfer(string, double);
 string withdraw(double amount);
+int returnUserIdByUsername(string, string&);
 bool isValidUsername(string);
 bool isValidPassword(string);
 bool userAlreadyExists(string);
@@ -197,7 +198,13 @@ string transfer(string usernameToSend, double amount) {
 	loggedUser.at(2) = balanceAfterSendingMoneyStr;
 	userData.at(userId) = loggedUser;
 
-
+	string balanceOfUserToSend;
+	int idOfUsernameToSend = returnUserIdByUsername(usernameToSend, balanceOfUserToSend);
+	
+	
+	double balanceAfterReceivingMoney = stod(balanceOfUserToSend) + amount;
+	string balanceAfterReceivingMoneyStr = to_string(balanceAfterReceivingMoney);
+	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
 
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
@@ -230,6 +237,20 @@ vector<string> returnUser(string username, string password, size_t& userId) {
 		}
 	}
 	return user;
+}
+
+int returnUserIdByUsername(string username, string& balanceOfUserToSend) {
+	int idOfUsernameToSend = 0;
+	for (int i = 0; i < userData.size(); i++) {
+		for (int j = 0; j < userData[i].size(); j++) {
+			if (userData[i][0] == username) {
+				idOfUsernameToSend = i;
+				balanceOfUserToSend = userData[i][2];
+				break;
+			}
+		}
+	}
+	return idOfUsernameToSend;
 }
 
 void getInformationFromFile() {
