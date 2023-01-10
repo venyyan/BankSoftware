@@ -3,45 +3,9 @@
 #include <regex>
 #include <sstream>
 #include <fstream>
+#include "global_constants.h"
 using namespace std;
 
-const char COMMAND_LOGIN = 'L';
-const char COMMAND_REGISTER = 'R';
-const char COMMAND_QUIT = 'Q';
-const char COMMAND_CANCEL_ACCOUNT = 'C';
-const char COMMAND_DEPOSIT = 'D';
-const char COMMAND_LOGOUT = 'L';
-const char COMMAND_TRANSFER = 'T';
-const char COMMAND_WITHDRAW = 'W';
-
-
-const string MESSAGE_OPENING = "Hello! You are now using BankSoftware.\nIf you want to Log In type \"L\"\n"
-"If you want to Register type \"R\" \nIf you want to Quit type \"Q\"";
-const string MESSAGE_NOT_VALID_USERNAME = "Not a valid username!";
-const string MESSAGE_NOT_VALID_PASSWORD = "Not a valid password!";
-const string MESSAGE_USER_ALREADY_EXISTS = "User already exists!";
-const string MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME = "Password does not match username. Try again.";
-const string MESSAGE_USER_DOES_NOT_EXIST = "User does not exist! Try again or register.";
-const string MESSAGE_AFTER_LOGGING_FIRST = "Registered successfully!\nYou have ";
-const string MESSAGE_AFTER_LOGGING_SECOND = "Choose one of"
-"the following options: \nC - cancel account\nD - deposit\nL - logout\nT - transfer\nW - withdraw";
-const string MESSAGE_ENTER_PASSWORD = "Please, enter your password: ";
-const string MESSAGE_DEPOSIT = "Please enter deposit amount: ";
-const string MESSAGE_NOT_POSITIVE_AMOUNT = "You entered a non-positive amount!";
-const string MESSAGE_SUCCESSFUL_DEPOSIT = "You successfully deposited ";
-const string MESSAGE_EXCEEDED_OVERDRAFT = "The maximal overdraft is 10000! You exceed it by ";
-const string MESSAGE_TRANSFER = "You successfully transfered ";
-const string MESSAGE_WITHDRAW = "You successfully withdrew ";
-const string MESSAGE_NOT_VALID_COMMAND = "Not a valid command!";
-
-const string REGEX_USERNAME = "^[A-Za-z\!-/\:-@\[-_]+$";
-const string REGEX_PASSWORD = "[A-Za-z\\\\0-9\!\@\#\$\%\^\&\*]+$";
-const string REGEX_PASSWORD_CONTAINS_AT_LEAST_ONE_UPPERCASE_LOWERCASE_SYMBOL =
-"(?=.*[a-z])(?=.*[A-Z])(?=.*\\W)^[^ ]+$";
-
-const unsigned MINIMUM_PASSWORD_LENGTH = 5;
-
-const int MAX_OVERDRAFT = -10000;
 string registerUser(bool&);
 string loginUser(bool&);
 string cancelAccount();
@@ -114,7 +78,11 @@ int main()
 
 string registerUser(bool& isLogged) {
 	string username, password;
-	cin >> username >> password;
+	cout << MESSAGE_USERNAME_REGISTER;
+	cin >> username;
+	cout << MESSAGE_PASSWORD_REGISTER;
+	cin >> password;
+
 	if (!isValidUsername(username)) {
 		isLogged = false;
 		return MESSAGE_NOT_VALID_USERNAME;
@@ -128,18 +96,22 @@ string registerUser(bool& isLogged) {
 		return MESSAGE_USER_ALREADY_EXISTS;
 	}
 	isLogged = true;
-	vector<string> user = { username, hashedPassword(password), "0" };
+	vector<string> user = { username, hashedPassword(password), ZERO_BALANCE };
 	userData.push_back(user);
 	if (isLogged) {
 		loggedUser = returnUser(username, password, userId);
 	}
 
-	return MESSAGE_AFTER_LOGGING_FIRST + "0" + MESSAGE_AFTER_LOGGING_SECOND;
+	return MESSAGE_AFTER_LOGGING_FIRST + ZERO_BALANCE + MESSAGE_AFTER_LOGGING_SECOND;
 }
 
 string loginUser(bool& isLogged) {
 	string username, password;
-	cin >> username >> password;
+	cout << MESSAGE_ENTER_USERNAME;
+	cin >> username;
+	cout << MESSAGE_ENTER_PASSWORD;
+	cin >> password;
+
 	if (!userAlreadyExists(username)) {
 		isLogged = false;
 		return MESSAGE_USER_DOES_NOT_EXIST;
@@ -155,7 +127,8 @@ string loginUser(bool& isLogged) {
 		loggedUser = returnUser(username, password, userId);
 
 	}
-	return MESSAGE_AFTER_LOGGING_SECOND;
+	system("cls");
+	return MESSAGE_AFTER_LOGGING_FIRST + loggedUser[2] + MESSAGE_AFTER_LOGGING_SECOND;
 }
 
 string cancelAccount() {
@@ -168,7 +141,13 @@ string cancelAccount() {
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
 
+	double balance = stod(loggedUser[2]);
+	if (balance > 0) {
+		return MESSAGE_BALANCE_IS_NOT_ZERO;
+	}
 	userData.erase(userData.begin() + userId);
+
+	system("cls");
 	return MESSAGE_OPENING;
 }
 
@@ -188,13 +167,18 @@ string deposit() {
 	loggedUser.at(2) = balanceAfterDepositStr;
 	userData.at(userId) = loggedUser;
 
+	system("cls");
 	return MESSAGE_SUCCESSFUL_DEPOSIT + depositAmountStr + " BGN";
 }
 
 string transfer() {
 	double amount;
 	string usernameToSend;
-	cin >> amount >> usernameToSend;
+	cout << MESSAGE_ENTER_AMOUNT;
+	cin >> amount;
+	cout << MESSAGE_ENTER_USERNAME_TO_SEND;
+	cin >> usernameToSend;
+
 	if (!userAlreadyExists(usernameToSend)) {
 		return MESSAGE_NOT_VALID_USERNAME;
 	}
@@ -216,11 +200,13 @@ string transfer() {
 	string balanceAfterReceivingMoneyStr = to_string(balanceAfterReceivingMoney);
 	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
 
+	system("cls");
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
 
 string withdraw() {
 	double amount;
+	cout << MESSAGE_ENTER_AMOUNT;
 	cin >> amount;
 
 	double balance = stof(loggedUser[2]);
@@ -232,6 +218,8 @@ string withdraw() {
 	string balanceAfterWithdrawingStr = to_string(balanceAfterWithdrawing);
 	loggedUser.at(2) = balanceAfterWithdrawingStr;
 	userData.at(userId) = loggedUser;
+
+	system("cls");
 	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
 }
 
