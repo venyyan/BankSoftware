@@ -13,6 +13,7 @@ string deposit();
 string hashedPassword(string);
 string transfer();
 string withdraw();
+string roundDouble(string);
 int returnUserIdByUsername(string, string&);
 bool isValidUsername(string);
 bool isValidPassword(string);
@@ -159,10 +160,14 @@ string deposit() {
 	if (!isPositiveAmount(depositAmount)) {
 		return MESSAGE_NOT_POSITIVE_AMOUNT;
 	}
-	string depositAmountStr = to_string(ceil(depositAmount * 100.0) / 100.0);
+	
+
+	string depositAmountStr = to_string(depositAmount);
+	depositAmountStr = roundDouble(depositAmountStr);
 
 	double balanceAfterDeposit = stof(loggedUser[2]) + depositAmount;
 	string balanceAfterDepositStr = to_string(balanceAfterDeposit);
+	balanceAfterDepositStr = roundDouble(balanceAfterDepositStr);
 
 	loggedUser.at(2) = balanceAfterDepositStr;
 	userData.at(userId) = loggedUser;
@@ -189,6 +194,7 @@ string transfer() {
 
 	double balanceAfterSendingMoney = stod(loggedUser[2]) - amount;
 	string balanceAfterSendingMoneyStr = to_string(balanceAfterSendingMoney);
+	balanceAfterSendingMoneyStr = roundDouble(balanceAfterSendingMoneyStr);
 	loggedUser.at(2) = balanceAfterSendingMoneyStr;
 	userData.at(userId) = loggedUser;
 
@@ -198,10 +204,11 @@ string transfer() {
 
 	double balanceAfterReceivingMoney = stod(balanceOfUserToSend) + amount;
 	string balanceAfterReceivingMoneyStr = to_string(balanceAfterReceivingMoney);
+	balanceAfterReceivingMoneyStr = roundDouble(balanceAfterReceivingMoneyStr);
 	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
 
 	system("cls");
-	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
+	return MESSAGE_TRANSFER + roundDouble(to_string(amount)) + " BGN!";
 }
 
 string withdraw() {
@@ -216,11 +223,12 @@ string withdraw() {
 
 	double balanceAfterWithdrawing = stod(loggedUser[2]) - amount;
 	string balanceAfterWithdrawingStr = to_string(balanceAfterWithdrawing);
+	balanceAfterWithdrawingStr = roundDouble(balanceAfterWithdrawingStr);
 	loggedUser.at(2) = balanceAfterWithdrawingStr;
 	userData.at(userId) = loggedUser;
 
 	system("cls");
-	return MESSAGE_TRANSFER + to_string(amount) + " BGN!";
+	return MESSAGE_TRANSFER + roundDouble(to_string(amount)) + " BGN!";
 }
 
 vector<string> returnUser(string username, string password, size_t& userId) {
@@ -256,7 +264,11 @@ int returnUserIdByUsername(string username, string& balanceOfUserToSend) {
 
 void getInformationFromFile() {
 	fstream file;
-	file.open("BankSoftwareDataBase.txt", fstream::in);
+	file.open(FILE_NAME, fstream::in);
+	if (!file.is_open()) {
+		cout << MESSAGE_NOT_OPENED_FILE << endl;
+	}
+
 	string buffer;
 
 	while (getline(file, buffer)) {
@@ -268,7 +280,7 @@ void getInformationFromFile() {
 void updateFile() {
 	fstream file;
 
-	file.open("BankSoftwareDataBase.txt", fstream::out);
+	file.open(FILE_NAME, fstream::out);
 	for (int i = 0; i < userData.size(); i++) {
 		string input;
 		for (int j = 0; j < userData[i].size(); j++) {
@@ -341,6 +353,18 @@ bool passwordMatchesUsername(string username, string password) {
 		}
 	}
 	return false;
+}
+
+string roundDouble(string number) {
+	int index = 0;
+	while (number[index] != '\0') {
+		if (number[index] == '.') {
+			break;
+		}
+		index++;
+	}
+	number = number.substr(0, index + 3);
+	return number;
 }
 
 bool isPositiveAmount(double amount) {

@@ -38,6 +38,9 @@ const string MESSAGE_WITHDRAW = "You successfully withdrew ";
 const string MESSAGE_NOT_VALID_COMMAND = "Not a valid command!";
 const string MESSAGE_BALANCE_IS_NOT_ZERO = "You still have money in your account!";
 const string ZERO_BALANCE = "0";
+const string MESSAGE_NOT_OPENED_FILE = "Error opening file.";
+
+const string FILE_NAME = "BankSoftwareDataBase.txt";
 
 const string REGEX_USERNAME = "^[A-Za-z\!-/\:-@\[-_]+$";
 const string REGEX_PASSWORD = "[A-Za-z\\\\0-9\!\@\#\$\%\^\&\*]+$";
