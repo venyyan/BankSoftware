@@ -1,9 +1,25 @@
+/**
+*
+* Solution to course project #09
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2022/2023
+*
+* @author Venelina Andreeva
+* @idnumber 0MI0600184
+* @compiler <VC>
+*
+* Realize BankSoftware
+*
+*/
+
 #include <iostream>
 #include <string>
 #include <regex>
 #include <sstream>
 #include <fstream>
 #include "global_constants.h"
+#include <iomanip>  
 using namespace std;
 
 string registerUser(bool&);
@@ -13,16 +29,22 @@ string deposit();
 string hashedPassword(string);
 string transfer();
 string withdraw();
+string logout(bool&);
 string roundDouble(string);
+string takeMoneyFromLoggedUser(string, bool&);
+double stringToDouble(string);
 int returnUserIdByUsername(string, string&);
 bool isValidUsername(string);
 bool isValidPassword(string);
 bool userAlreadyExists(string);
 bool passwordMatchesUsername(string, string);
-bool isPositiveAmount(double);
+bool isPositiveAmount(string);
+bool isValidNumeral(string);
+bool exceededOverdraft(double, double);
+string validateInputData(string);
 vector<string> returnUser(string, string, size_t&);
 vector<string> splitLineFromFile(string);
-void getInformationFromFile();
+void getInformationFromFile(bool&);
 void updateFile();
 
 
@@ -32,7 +54,13 @@ size_t userId;
 
 int main()
 {
-	getInformationFromFile();
+	bool isFileOpened = true;
+	getInformationFromFile(isFileOpened);
+
+	if (!isFileOpened) {
+		return 0;
+	}
+
 	cout << MESSAGE_OPENING << endl;
 
 	char command = ' ';
@@ -45,9 +73,9 @@ int main()
 
 		if (!isLogged) {
 			switch (command) {
-			case COMMAND_LOGIN: cout << loginUser(isLogged);
+			case COMMAND_LOGIN: cout << loginUser(isLogged) << endl;
 				break;
-			case COMMAND_REGISTER: cout << registerUser(isLogged);
+			case COMMAND_REGISTER: cout << registerUser(isLogged) << endl;
 				break;
 			case COMMAND_QUIT: return 0;
 				break;
@@ -57,21 +85,20 @@ int main()
 		}
 		else {
 			switch (command) {
-			case COMMAND_CANCEL_ACCOUNT: cout << cancelAccount();
+			case COMMAND_CANCEL_ACCOUNT: cout << cancelAccount() << endl;
 				break;
-			case COMMAND_DEPOSIT: cout << deposit();
+			case COMMAND_DEPOSIT: cout << deposit() << endl;
 				break;
-			case COMMAND_LOGOUT: cout << MESSAGE_OPENING; 
-				isLogged = false;
+			case COMMAND_LOGOUT: cout << logout(isLogged) << endl;
 				break;
-			case COMMAND_TRANSFER: cout << transfer();
+			case COMMAND_TRANSFER: cout << transfer() << endl;
 				break;
-			case COMMAND_WITHDRAW: cout << withdraw();
+			case COMMAND_WITHDRAW: cout << withdraw() << endl;
 				break;
 			default: cout << MESSAGE_NOT_VALID_COMMAND;
 				break;
 			}
-			
+
 		}
 		updateFile();
 	}
@@ -79,6 +106,7 @@ int main()
 
 string registerUser(bool& isLogged) {
 	string username, password;
+
 	cout << MESSAGE_USERNAME_REGISTER;
 	cin >> username;
 	cout << MESSAGE_PASSWORD_REGISTER;
@@ -102,12 +130,13 @@ string registerUser(bool& isLogged) {
 	if (isLogged) {
 		loggedUser = returnUser(username, password, userId);
 	}
-
-	return MESSAGE_AFTER_LOGGING_FIRST + ZERO_BALANCE + MESSAGE_AFTER_LOGGING_SECOND;
+	system("cls");
+	return MESSAGE_AFTER_REGISTERING + ZERO_BALANCE + " " + "BGN. " + MESSAGE_AFTER_LOGGING;
 }
 
 string loginUser(bool& isLogged) {
 	string username, password;
+
 	cout << MESSAGE_ENTER_USERNAME;
 	cin >> username;
 	cout << MESSAGE_ENTER_PASSWORD;
@@ -129,10 +158,27 @@ string loginUser(bool& isLogged) {
 
 	}
 	system("cls");
-	return MESSAGE_AFTER_LOGGING_FIRST + loggedUser[2] + MESSAGE_AFTER_LOGGING_SECOND;
+	return MESSAGE_AFTER_LOGGING_FIRST + loggedUser[2] + MESSAGE_BGN + MESSAGE_AFTER_LOGGING;
+}
+
+string logout(bool& isLogged) {
+	isLogged = false;
+	loggedUser.clear();
+	userId = NULL;
+
+	system("cls");
+	return MESSAGE_AFTER_LOGOUT + "\n" + MESSAGE_OPENING;
 }
 
 string cancelAccount() {
+	double balance = stringToDouble(loggedUser[2]);
+
+	if (balance > 0) {
+		system("cls");
+		return MESSAGE_BALANCE_IS_NOT_ZERO + MESSAGE_REMAINING_AMOUNT
+			+ roundDouble(to_string(balance)) + " BGN." + "\n" + MESSAGE_AFTER_LOGGING;
+	}
+
 	cout << MESSAGE_ENTER_PASSWORD;
 	string password;
 	cin >> password;
@@ -141,94 +187,101 @@ string cancelAccount() {
 	if (!passwordMatchesUsername(username, hashedPassword(password))) {
 		return MESSAGE_PASSWORD_DOES_NOT_MATCH_USERNAME;
 	}
-
-	double balance = stod(loggedUser[2]);
-	if (balance > 0) {
-		return MESSAGE_BALANCE_IS_NOT_ZERO;
-	}
 	userData.erase(userData.begin() + userId);
 
 	system("cls");
-	return MESSAGE_OPENING;
+	return MESSAGE_CANCEL_ACCOUNT + "\n" + MESSAGE_OPENING;
 }
 
 string deposit() {
-	double depositAmount;
+	string amountStr;
 	cout << MESSAGE_DEPOSIT;
-	cin >> depositAmount;
+	cin >> amountStr;
 
-	if (!isPositiveAmount(depositAmount)) {
+	if (!isPositiveAmount(amountStr)) {
 		return MESSAGE_NOT_POSITIVE_AMOUNT;
 	}
-	
 
-	string depositAmountStr = to_string(depositAmount);
-	depositAmountStr = roundDouble(depositAmountStr);
+	if (!isValidNumeral(amountStr)) {
+		return MESSAGE_NOT_VALID_AMOUNT;
+	}
 
-	double balanceAfterDeposit = stof(loggedUser[2]) + depositAmount;
-	string balanceAfterDepositStr = to_string(balanceAfterDeposit);
-	balanceAfterDepositStr = roundDouble(balanceAfterDepositStr);
+	amountStr = roundDouble(amountStr);
+
+	double amount = stringToDouble(amountStr);
+	double currentBalance = stringToDouble(loggedUser[2]);
+
+	double balanceAfterDeposit = currentBalance + amount;
+	string balanceAfterDepositStr = roundDouble(to_string(balanceAfterDeposit));
 
 	loggedUser.at(2) = balanceAfterDepositStr;
 	userData.at(userId) = loggedUser;
 
 	system("cls");
-	return MESSAGE_SUCCESSFUL_DEPOSIT + depositAmountStr + " BGN";
+	return MESSAGE_SUCCESSFUL_DEPOSIT + roundDouble(amountStr) + " BGN!\n"
+		+ MESSAGE_REMAINING_AMOUNT + balanceAfterDepositStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
 string transfer() {
-	double amount;
+	string amountStr;
 	string usernameToSend;
 	cout << MESSAGE_ENTER_AMOUNT;
-	cin >> amount;
+	cin >> amountStr;
 	cout << MESSAGE_ENTER_USERNAME_TO_SEND;
 	cin >> usernameToSend;
+
+	if (!isPositiveAmount(amountStr)) {
+		return MESSAGE_NOT_POSITIVE_AMOUNT;
+	}
+
+	if (!isValidNumeral(amountStr)) {
+		return MESSAGE_NOT_VALID_AMOUNT;
+	}
 
 	if (!userAlreadyExists(usernameToSend)) {
 		return MESSAGE_NOT_VALID_USERNAME;
 	}
-	double balance = stof(loggedUser[2]);
-	if (balance - amount < MAX_OVERDRAFT) {
-		return MESSAGE_EXCEEDED_OVERDRAFT + to_string(abs(balance - amount + MAX_OVERDRAFT)) + " BGN";
+	bool isExceededOverdraft = false;
+	string balanceAfterSendingMoneyStr = takeMoneyFromLoggedUser(amountStr, isExceededOverdraft);
+	if (isExceededOverdraft) {
+		return balanceAfterSendingMoneyStr;
 	}
-
-	double balanceAfterSendingMoney = stod(loggedUser[2]) - amount;
-	string balanceAfterSendingMoneyStr = to_string(balanceAfterSendingMoney);
-	balanceAfterSendingMoneyStr = roundDouble(balanceAfterSendingMoneyStr);
-	loggedUser.at(2) = balanceAfterSendingMoneyStr;
-	userData.at(userId) = loggedUser;
 
 	string balanceOfUserToSend;
 	int idOfUsernameToSend = returnUserIdByUsername(usernameToSend, balanceOfUserToSend);
 
-
-	double balanceAfterReceivingMoney = stod(balanceOfUserToSend) + amount;
-	string balanceAfterReceivingMoneyStr = to_string(balanceAfterReceivingMoney);
-	balanceAfterReceivingMoneyStr = roundDouble(balanceAfterReceivingMoneyStr);
+	double balanceAfterReceivingMoney = stringToDouble(balanceOfUserToSend) + stringToDouble(amountStr);
+	string balanceAfterReceivingMoneyStr = roundDouble(to_string(balanceAfterReceivingMoney));
+	
 	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
 
 	system("cls");
-	return MESSAGE_TRANSFER + roundDouble(to_string(amount)) + " BGN!";
+	return MESSAGE_TRANSFER + roundDouble(amountStr) + " BGN to " + usernameToSend + "!\n" +
+		MESSAGE_REMAINING_AMOUNT + balanceAfterSendingMoneyStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
 string withdraw() {
-	double amount;
+	string amountStr;
 	cout << MESSAGE_ENTER_AMOUNT;
-	cin >> amount;
+	cin >> amountStr;
 
-	double balance = stof(loggedUser[2]);
-	if (balance - amount < MAX_OVERDRAFT) {
-		return MESSAGE_EXCEEDED_OVERDRAFT + to_string(abs(balance - amount + MAX_OVERDRAFT)) + " BGN";
+	if (!isPositiveAmount(amountStr)) {
+		return MESSAGE_NOT_POSITIVE_AMOUNT;
 	}
 
-	double balanceAfterWithdrawing = stod(loggedUser[2]) - amount;
-	string balanceAfterWithdrawingStr = to_string(balanceAfterWithdrawing);
-	balanceAfterWithdrawingStr = roundDouble(balanceAfterWithdrawingStr);
-	loggedUser.at(2) = balanceAfterWithdrawingStr;
-	userData.at(userId) = loggedUser;
+	if (!isValidNumeral(amountStr)) {
+		return MESSAGE_NOT_VALID_AMOUNT;
+	}
+
+	bool isExceededOverdraft = false;
+	string balanceAfterWithdrawingStr = takeMoneyFromLoggedUser(amountStr, isExceededOverdraft);
+	if (isExceededOverdraft) {
+		return balanceAfterWithdrawingStr;
+	}
 
 	system("cls");
-	return MESSAGE_TRANSFER + roundDouble(to_string(amount)) + " BGN!";
+	return MESSAGE_WITHDRAW + roundDouble(amountStr) + " BGN!\n" + MESSAGE_REMAINING_AMOUNT
+		+ balanceAfterWithdrawingStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
 vector<string> returnUser(string username, string password, size_t& userId) {
@@ -262,11 +315,14 @@ int returnUserIdByUsername(string username, string& balanceOfUserToSend) {
 	return idOfUsernameToSend;
 }
 
-void getInformationFromFile() {
+void getInformationFromFile(bool& fileIsOpened) {
 	fstream file;
 	file.open(FILE_NAME, fstream::in);
+
 	if (!file.is_open()) {
 		cout << MESSAGE_NOT_OPENED_FILE << endl;
+		fileIsOpened = false;
+		return;
 	}
 
 	string buffer;
@@ -367,6 +423,112 @@ string roundDouble(string number) {
 	return number;
 }
 
-bool isPositiveAmount(double amount) {
-	return amount > 0;
+bool isValidNumeral(string amount) {
+	int index = 0;
+	while (amount[index] != '\0') {
+		if (!(amount[index] >= '0' && amount[index] <= '9') && !(amount[index] == '.')) {
+			return false;
+			break;
+		}
+		index++;
+	}
+	return true;
+}
+
+bool isPositiveAmount(string amount) {
+	return amount[0] != '-' && amount[0] != '0';
+}
+
+bool exceededOverdraft(double amount, double balance) {
+	if (balance - amount < MAX_OVERDRAFT) {
+		return true;
+	}
+	return false;
+}
+size_t numberSize(int number) {
+
+	int numberSize = 0;
+
+	if (number == 0) {
+		numberSize = 1;
+	}
+	while (number > 0) {
+		number /= 10;
+		numberSize++;
+	}
+	return numberSize;
+}
+
+double stringToDouble(string str) {
+	double result = 0;
+	bool isNegative = false;
+
+	int mantissaInt = 0;
+	double mantissaDouble = 0;
+
+	bool hasDot = false;
+	size_t strLength = str.size();
+
+	int index = 0;
+	int indexOfDot = 0;
+	while (str[index] != '\0') {
+		if (str[index] == '.') {
+			indexOfDot = index;
+			hasDot = true;
+		}
+		index++;
+	}
+
+	if (!hasDot) {
+		indexOfDot = str.size();
+	}
+
+	index = 0 + isNegative;
+	int counter = indexOfDot - 1 - isNegative;
+	while (index != indexOfDot) {
+		result += (str[index] - '0') * pow(10, counter);
+		counter--;
+		index++;
+	}
+	if (!hasDot) {
+		return result;
+	}
+
+	index = indexOfDot + 1;
+	counter = strLength - indexOfDot - 2;
+	while (str[index] != '\0') {
+		mantissaInt += (str[index] - '0') * pow(10, counter);
+		counter--;
+		index++;
+	}
+
+	int mantissaCopy = mantissaInt;
+	size_t mantissaSize = numberSize(mantissaCopy);
+	mantissaDouble = mantissaInt;
+	mantissaDouble /= pow(10, mantissaSize);
+
+	result += mantissaDouble;
+
+	cout << setprecision(2);
+	return result;
+}
+
+string takeMoneyFromLoggedUser(string amountStr, bool& isExceededOverdraft) {
+	double amount = stringToDouble(amountStr);
+	double balance = stringToDouble(loggedUser[2]);
+
+	if (exceededOverdraft(amount, balance)) {
+		isExceededOverdraft = true;
+		string exceededAmount = to_string(abs(balance - amount + MAX_OVERDRAFT));
+		return MESSAGE_EXCEEDED_OVERDRAFT + roundDouble(exceededAmount) + " BGN.\n"
+			+ MESSAGE_AFTER_LOGGING;
+	}
+
+	double balanceAfterSendingMoney = balance - amount;
+	string balanceAfterSendingMoneyStr = roundDouble(to_string(balanceAfterSendingMoney));
+
+	loggedUser.at(2) = balanceAfterSendingMoneyStr;
+	userData.at(userId) = loggedUser;
+
+	return balanceAfterSendingMoneyStr;
 }
