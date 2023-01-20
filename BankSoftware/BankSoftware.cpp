@@ -158,7 +158,7 @@ string loginUser(bool& isLogged) {
 
 	}
 	system("cls");
-	return MESSAGE_AFTER_LOGGING_FIRST + loggedUser[2] + MESSAGE_BGN + MESSAGE_AFTER_LOGGING;
+	return MESSAGE_AFTER_LOGGING_FIRST + loggedUser[2] + " BGN. " + MESSAGE_AFTER_LOGGING;
 }
 
 string logout(bool& isLogged) {
@@ -218,7 +218,7 @@ string deposit() {
 	userData.at(userId) = loggedUser;
 
 	system("cls");
-	return MESSAGE_SUCCESSFUL_DEPOSIT + roundDouble(amountStr) + " BGN!\n"
+	return MESSAGE_SUCCESSFUL_DEPOSIT + roundDouble(to_string(amount)) + " BGN!\n"
 		+ MESSAGE_REMAINING_AMOUNT + balanceAfterDepositStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
@@ -241,6 +241,8 @@ string transfer() {
 	if (!userAlreadyExists(usernameToSend)) {
 		return MESSAGE_NOT_VALID_USERNAME;
 	}
+	double amount = stringToDouble(amountStr);
+
 	bool isExceededOverdraft = false;
 	string balanceAfterSendingMoneyStr = takeMoneyFromLoggedUser(amountStr, isExceededOverdraft);
 	if (isExceededOverdraft) {
@@ -256,7 +258,7 @@ string transfer() {
 	userData.at(idOfUsernameToSend)[2] = balanceAfterReceivingMoneyStr;
 
 	system("cls");
-	return MESSAGE_TRANSFER + roundDouble(amountStr) + " BGN to " + usernameToSend + "!\n" +
+	return MESSAGE_TRANSFER + roundDouble(to_string(amount)) + " BGN to " + usernameToSend + "!\n" +
 		MESSAGE_REMAINING_AMOUNT + balanceAfterSendingMoneyStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
@@ -273,6 +275,7 @@ string withdraw() {
 		return MESSAGE_NOT_VALID_AMOUNT;
 	}
 
+	double amount = stringToDouble(amountStr);
 	bool isExceededOverdraft = false;
 	string balanceAfterWithdrawingStr = takeMoneyFromLoggedUser(amountStr, isExceededOverdraft);
 	if (isExceededOverdraft) {
@@ -280,7 +283,7 @@ string withdraw() {
 	}
 
 	system("cls");
-	return MESSAGE_WITHDRAW + roundDouble(amountStr) + " BGN!\n" + MESSAGE_REMAINING_AMOUNT
+	return MESSAGE_WITHDRAW + roundDouble(to_string(amount)) + " BGN!\n" + MESSAGE_REMAINING_AMOUNT
 		+ balanceAfterWithdrawingStr + " BGN.\n" + MESSAGE_AFTER_LOGGING;
 }
 
@@ -436,7 +439,7 @@ bool isValidNumeral(string amount) {
 }
 
 bool isPositiveAmount(string amount) {
-	return amount[0] != '-' && amount[0] != '0';
+	return amount[0] != '-';
 }
 
 bool exceededOverdraft(double amount, double balance) {
